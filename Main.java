@@ -1,6 +1,7 @@
-package session15_Kha1;
+package session15_Kha2;
 
 import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeParseException;
 import java.util.InputMismatchException;
 import java.util.Scanner;
@@ -9,17 +10,17 @@ public class Main {
 
     static void main(String[] args) {
         Scanner scanner = new Scanner(System.in);
-        MovieManager<Movie> manager = new MovieManager<>();
+        SubjectManager<Subject> manager = new SubjectManager<>();
+        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd");
 
         while (true) {
-            System.out.println("\nChọn chức nắng: ");
-            System.out.println("1. Thêm phim mới");
-            System.out.println("2. Sửa phim");
-            System.out.println("3. Xóa phim");
-            System.out.println("4. Hiển thị phim");
-            System.out.println("5. Tìm phim theo tên");
-            System.out.println("6. Lọc phim rating > 8.0");
-            System.out.println("7. Thoát");
+            System.out.println("\n===== QUẢN LÝ MÔN HỌC =====");
+            System.out.println("1. Hiển thị danh sách môn học");
+            System.out.println("2. Thêm môn học");
+            System.out.println("3. Xóa môn học theo mã");
+            System.out.println("4. Tìm kiếm môn học theo tên");
+            System.out.println("5. Lọc môn học có tín chỉ > 3");
+            System.out.println("6. Thoát");
             System.out.print("Chọn chức năng: ");
 
             try {
@@ -27,16 +28,18 @@ public class Main {
                 scanner.nextLine();
 
                 switch (choice) {
-                    case 1 -> addMovie(scanner, manager);
-                    case 2 -> editMovie(scanner, manager);
-                    case 3 -> deleteMovie(scanner, manager);
-                    case 4 -> manager.displayMovies();
-                    case 5 -> {
-                        System.out.print("Nhập tên phim cần tìm: ");
-                        manager.searchByTitle(scanner.nextLine());
+                    case 1 -> manager.displaySubjects();
+                    case 2 -> addSubject(scanner, manager, formatter);
+                    case 3 -> {
+                        System.out.print("Nhập mã môn cần xóa: ");
+                        manager.deleteByCode(scanner.nextLine());
                     }
-                    case 6 -> manager.filterByRating();
-                    case 7 -> {
+                    case 4 -> {
+                        System.out.print("Nhập tên môn cần tìm: ");
+                        manager.searchByName(scanner.nextLine());
+                    }
+                    case 5 -> manager.filterByCredits();
+                    case 6 -> {
                         System.out.println("Thoát chương trình.");
                         return;
                     }
@@ -50,77 +53,33 @@ public class Main {
         }
     }
 
-    private static void addMovie(Scanner scanner, MovieManager<Movie> manager) {
+    private static void addSubject(Scanner scanner, SubjectManager<Subject> manager, DateTimeFormatter formatter) {
         try {
-            System.out.print("ID: ");
-            int id = scanner.nextInt();
+            System.out.print("Mã môn: ");
+            String code = scanner.nextLine();
+
+            System.out.print("Tên môn: ");
+            String name = scanner.nextLine();
+
+            System.out.print("Số tín chỉ: ");
+            int credits = scanner.nextInt();
             scanner.nextLine();
 
-            System.out.print("Tên phim: ");
-            String title = scanner.nextLine();
+            if (credits <= 0 || credits > 10) {
+                throw new IllegalArgumentException("Số tín chỉ phải từ 1 đến 10.");
+            }
+            System.out.print("Ngày bắt đầu (yyyy-MM-dd): ");
+            LocalDate startDate = LocalDate.parse(scanner.nextLine(), formatter);
 
-            System.out.print("Đạo diễn: ");
-            String director = scanner.nextLine();
-
-            System.out.print("Ngày phát hành (yyyy-MM-dd): ");
-            LocalDate date = LocalDate.parse(scanner.nextLine());
-
-            System.out.print("Rating: ");
-            double rating = scanner.nextDouble();
-
-            manager.addMovie(new Movie(id, title, director, date, rating));
-            System.out.println("Thêm phim thành công!");
-
-        } catch (DateTimeParseException e) {
-            System.err.println("Sai định dạng ngày (yyyy-MM-dd)");
+            manager.addSubject(new Subject(code, name, credits, startDate));
+            System.out.println("Thêm môn học thành công!");
         } catch (InputMismatchException e) {
-            System.err.println("Rating phải là số!");
+            System.err.println("Số tín chỉ phải là số nguyên.");
             scanner.nextLine();
-        }
-    }
-
-    private static void editMovie(Scanner scanner, MovieManager<Movie> manager) {
-        System.out.print("Nhập ID phim cần sửa: ");
-        int id = scanner.nextInt();
-        scanner.nextLine();
-
-        Movie movie = manager.findById(id);
-        if (movie == null) {
-            System.out.println("Không tìm thấy phim.");
-            return;
-        }
-
-        try {
-            System.out.print("Tên mới: ");
-            movie.setTitle(scanner.nextLine());
-
-            System.out.print("Đạo diễn mới: ");
-            movie.setDirector(scanner.nextLine());
-
-            System.out.print("Ngày phát hành mới (yyyy-MM-dd): ");
-            movie.setReleaseDate(LocalDate.parse(scanner.nextLine()));
-
-            System.out.print("Rating mới: ");
-            movie.setRating(scanner.nextDouble());
-
-            System.out.println("Cập nhật thành công!");
-
         } catch (DateTimeParseException e) {
-            System.err.println("Sai định dạng ngày!");
-        } catch (InputMismatchException e) {
-            System.err.println("Rating phải là số!");
-            scanner.nextLine();
-        }
-    }
-
-    private static void deleteMovie(Scanner scanner, MovieManager<Movie> manager) {
-        System.out.print("Nhập ID phim cần xóa: ");
-        int id = scanner.nextInt();
-
-        if (manager.deleteMovie(id)) {
-            System.out.println("Xóa phim thành công!");
-        } else {
-            System.out.println("Không tìm thấy phim.");
+            System.err.println("Sai định dạng ngày (yyyy-MM-dd).");
+        } catch (IllegalArgumentException e) {
+            System.out.println(e.getMessage());
         }
     }
 }
